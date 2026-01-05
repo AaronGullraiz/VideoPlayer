@@ -1,0 +1,23 @@
+{
+    "loop": false,
+    "videos": [
+        {
+            "fileName": "V3.mp4",
+            "width": 1920,
+            "height": 1080,
+            "order": 0
+        },
+        {
+            "fileName": "VID-20250815-WA0046.mp4",
+            "width": 1080,
+            "height": 1920,
+            "order": 1
+        },
+        {
+            "fileName": "VID-20250815-WA0009.mp4",
+            "width": 1080,
+            "height": 1920,
+            "order": 2
+        }
+    ]
+}
