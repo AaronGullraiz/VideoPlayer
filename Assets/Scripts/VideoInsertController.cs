@@ -6,14 +6,16 @@ using UnityEngine.UI;
 
 public class VideoInsertController : MonoBehaviour
 {
-    public TMP_InputField widthText, heightText;
+    public TMP_InputField widthText, heightText, durationInput;
 
     public Toggle loopToogle;
+    
+    const string loopKey = "IsLooping";
 
     private void Start()
     {
         var config = VideoConfigManager.Load();
-        loopToogle.isOn = config.loop;
+        loopToogle.isOn = PlayerPrefs.GetInt(loopKey,0)==1;
     }
 
     public void SelectVideo()
@@ -23,10 +25,17 @@ public class VideoInsertController : MonoBehaviour
             WindowsMessageBox.Show("Width or Height is empty", "Error!");
             return; 
         }
-        PickVideo(int.Parse(widthText.text), int.Parse(heightText.text));
+        
+        if (string.IsNullOrEmpty(durationInput.text)) 
+        {
+            WindowsMessageBox.Show("Duration is empty", "Error!");
+            return; 
+        }
+        
+        PickVideo(int.Parse(widthText.text), int.Parse(heightText.text), float.Parse(durationInput.text));
     }
 
-    public void PickVideo(int width, int height)
+    public void PickVideo(int width, int height, float duration)
     {
         var paths = StandaloneFileBrowser.OpenFilePanel(
             "Select Video", "", "*", false);
@@ -59,7 +68,8 @@ public class VideoInsertController : MonoBehaviour
     public void SetLoop(bool loop)
     {
         var config = VideoConfigManager.Load();
-        config.loop = loopToogle.isOn;
         VideoConfigManager.Save(config);
+        
+        PlayerPrefs.SetInt(loopKey, loopToogle.isOn ? 1 : 0);
     }
 }

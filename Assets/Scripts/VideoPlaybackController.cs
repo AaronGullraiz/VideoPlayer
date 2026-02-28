@@ -1,27 +1,28 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Video;
 using UnityEngine.UI;
-using System;
-using System.Runtime.InteropServices;
 
 public class VideoPlaybackController : MonoBehaviour
 {
-    public Toggle screensizeToggle, fullscreenToggle;
-
+    public VideosDataHandler videosDataHandler;
     [SerializeField] private GameObject exitVideoButton;
     [SerializeField] private VideoPlayer videoPlayer;
     [SerializeField] private RawImage rawImage;
+    public GameObject videoImage;
     [SerializeField] private AspectRatioFitter aspectRatioFitter;
 
     private RenderTexture renderTexture;
-    private Queue<VideoEntry> queue;
+    private List<VideoEntry> playingVideosData=new();
     private VideoConfig config;
+    
+    bool isLoop = false;
 
-    const string screenSize = "Screen Size";
-    const string fullScreen = "Full Screen";
+    private float playingVideoTime = 0;
+    int playingVideoIndex = 0;
 
     private void Awake()
     {
@@ -31,31 +32,9 @@ public class VideoPlaybackController : MonoBehaviour
 
         videoPlayer.prepareCompleted += OnPrepared;
         videoPlayer.loopPointReached += OnFinished;
-
-        screensizeToggle.isOn = PlayerPrefs.GetInt(screenSize, 0) == 1;
-        fullscreenToggle.isOn = PlayerPrefs.GetInt(fullScreen, 0) == 1;
     }
 
-    public void ScreenSizeValueChange(bool val)
-    {
-        bool isScreen = !screensizeToggle.isOn;
-
-        PlayerPrefs.SetInt(screenSize, isScreen ? 1 : 0);
-        SetResizable(isScreen);
-        PlayerPrefs.Save();
-    }
-
-    public void FullscreenValueChange(bool val)
-    {
-        bool isFullScreen = fullscreenToggle.isOn;
-
-        Screen.fullScreen = isFullScreen;
-        PlayerPrefs.SetInt(fullScreen, isFullScreen ? 1 : 0);
-
-        PlayerPrefs.Save();
-    }
-
-    public void Play()
+    public void Play(string filename)
     {
         config = VideoConfigManager.Load();
 
@@ -64,28 +43,36 @@ public class VideoPlaybackController : MonoBehaviour
             WindowsMessageBox.Show("No Data Found!", "Error!");
             return;
         }
-        rawImage.gameObject.SetActive(true);
+        videoImage.SetActive(true);
         exitVideoButton.SetActive(true);
 
-        queue = new Queue<VideoEntry>(
-            config.videos.OrderBy(v => v.order)
-        );
+        playingVideosData.Clear();
+        isLoop = PlayerPrefs.GetInt("IsLooping",0)==1;
+        if (isLoop)
+        {
+            for (int i = 0; i < videosDataHandler.GetVideosData.videosData.Count; i++)
+            {
+                if (videosDataHandler.GetVideosData.videosData[i].videoTime > 0)
+                {
+                    playingVideosData.Add(config.videos.Find(x=>x.fileName == videosDataHandler.GetVideosData.videosData[i].videoFilename));
+                }
+            }
+            playingVideoIndex = playingVideosData.FindIndex(x=>x.fileName == filename);
+        }
+        else
+        {
+            playingVideosData.Add(config.videos.Find(x=>x.fileName == filename));
+            playingVideoIndex = 0;
+        }
 
         PlayNext();
     }
 
     private void PlayNext()
     {
-        if (queue.Count == 0)
-        {
-            if (config.loop)
-                Play();
-            else
-                ExitVideoPlayback();
-            return;
-        }
-
-        var video = queue.Dequeue();
+        if (playingVideosData.Count == 0) return;
+        
+        var video = playingVideosData[playingVideoIndex];
 
         string path = Path.Combine(
             Application.streamingAssetsPath,
@@ -95,6 +82,7 @@ public class VideoPlaybackController : MonoBehaviour
 
         videoPlayer.url = path;
         videoPlayer.Prepare();
+        playingVideoTime = videosDataHandler.GetVideoTime(video.fileName);
     }
 
     private void OnPrepared(VideoPlayer vp)
@@ -108,11 +96,20 @@ public class VideoPlaybackController : MonoBehaviour
         rawImage.texture = renderTexture;
         aspectRatioFitter.aspectRatio = (float)w / h;
 
+        vp.isLooping = true;
         vp.Play();
+        if(isLoop) StartCoroutine(VideoTimer(playingVideoTime));
     }
 
     private void OnFinished(VideoPlayer vp)
     {
+        if(!isLoop) ExitVideoPlayback();
+    }
+
+    IEnumerator VideoTimer(float time)
+    {
+        yield return new WaitForSeconds(time);
+        playingVideoIndex = (playingVideoIndex+1) % playingVideosData.Count;
         PlayNext();
     }
 
@@ -137,46 +134,14 @@ public class VideoPlaybackController : MonoBehaviour
         }
     }
 
-    public void OnQuitPressed()
-    {
-        Application.Quit();
-    }
-
     public void ExitVideoPlayback()
     {
         videoPlayer.Stop();
         renderTexture.Release();
-        rawImage.gameObject.SetActive(false);
+        videoImage.SetActive(false);
         exitVideoButton.SetActive(false);
-    }
-
-    [DllImport("user32.dll")]
-    private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
-
-    [DllImport("user32.dll")]
-    private static extern IntPtr GetActiveWindow();
-
-    [DllImport("user32.dll")]
-    private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
-
-    private const int GWL_STYLE = -16;
-    private const int WS_SIZEBOX = 0x00040000; // Resizable border
-    private const int WS_MAXIMIZEBOX = 0x00010000; // Maximize button
-
-    public void SetResizable(bool resizable)
-    {
-        IntPtr windowHandle = GetActiveWindow();
-        int style = GetWindowLong(windowHandle, GWL_STYLE);
-
-        if (resizable)
-        {
-            style |= WS_SIZEBOX | WS_MAXIMIZEBOX;
-        }
-        else
-        {
-            style &= ~(WS_SIZEBOX | WS_MAXIMIZEBOX);
-        }
-
-        SetWindowLong(windowHandle, GWL_STYLE, style);
+        StopAllCoroutines();
+        playingVideosData.Clear();
+        playingVideoIndex = 0;
     }
 }

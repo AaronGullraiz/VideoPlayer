@@ -18,10 +18,10 @@ public class VideoOrderUIController : MonoBehaviour
 
     private void Start()
     {
-        upButton.gameObject.SetActive(false);
-        downButton.gameObject.SetActive(false);
+        //upButton.gameObject.SetActive(false);
+        //downButton.gameObject.SetActive(false);
 
-        Refresh();
+        //Refresh();
     }
 
     private void Refresh()
