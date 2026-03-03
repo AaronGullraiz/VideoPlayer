@@ -11,7 +11,7 @@ public class MenuManager : MonoBehaviour
     public VideoPlaybackController videoPlaybackController;
     public VideosDataHandler videosData;
     
-    public Toggle screensizeToggle, fullscreenToggle;
+    public Toggle screensizeToggle, fullscreenToggle, loopToggle;
 
     public TMP_Dropdown totalVideoDropdown;
     
@@ -74,6 +74,15 @@ public class MenuManager : MonoBehaviour
         }
 
         SetVideoButtons();
+    }
+
+    public void PlayLoopVideos()
+    {
+        var videosData = VideoConfigManager.Load();
+        if (loopToggle.isOn && videosData.videos.Count > 0)
+        {
+            videoPlaybackController.Play(videosData.videos[0].fileName);
+        }
     }
 
     void SetVideoButtons()

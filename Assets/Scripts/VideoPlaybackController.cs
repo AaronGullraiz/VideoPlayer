@@ -108,7 +108,7 @@ public class VideoPlaybackController : MonoBehaviour
 
     IEnumerator VideoTimer(float time)
     {
-        yield return new WaitForSeconds(time);
+        yield return new WaitForSeconds(time*60);
         playingVideoIndex = (playingVideoIndex+1) % playingVideosData.Count;
         PlayNext();
     }

@@ -26,12 +26,6 @@ public class VideoInsertController : MonoBehaviour
             return; 
         }
         
-        if (string.IsNullOrEmpty(durationInput.text)) 
-        {
-            WindowsMessageBox.Show("Duration is empty", "Error!");
-            return; 
-        }
-        
         PickVideo(int.Parse(widthText.text), int.Parse(heightText.text), float.Parse(durationInput.text));
     }
 
