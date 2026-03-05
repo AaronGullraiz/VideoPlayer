@@ -6,6 +6,8 @@ using UnityEngine.UI;
 
 public class VideoInsertController : MonoBehaviour
 {
+    public MenuManager manager;
+    public VideosDataHandler videoConfigManager;
     public TMP_InputField widthText, heightText, durationInput;
 
     public Toggle loopToogle;
@@ -26,10 +28,10 @@ public class VideoInsertController : MonoBehaviour
             return; 
         }
         
-        PickVideo(int.Parse(widthText.text), int.Parse(heightText.text), float.Parse(durationInput.text));
+        PickVideo(int.Parse(widthText.text), int.Parse(heightText.text));
     }
 
-    public void PickVideo(int width, int height, float duration)
+    public void PickVideo(int width, int height)
     {
         var paths = StandaloneFileBrowser.OpenFilePanel(
             "Select Video", "", "*", false);
@@ -57,6 +59,10 @@ public class VideoInsertController : MonoBehaviour
         });
 
         VideoConfigManager.Save(config);
+        
+        videoConfigManager.AddNewVideo(fileName);
+        WindowsMessageBox.Show("Video \""+fileName+"\" added Successfully!", "Message!");
+        manager.UpdateUI();
     }
 
     public void SetLoop(bool loop)

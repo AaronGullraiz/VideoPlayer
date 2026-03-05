@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Runtime.InteropServices;
 using TMPro;
 using UnityEngine;
@@ -88,11 +89,32 @@ public class MenuManager : MonoBehaviour
 
     public void PlayLoopVideos()
     {
-        var videosData = VideoConfigManager.Load();
-        if (loopToggle.isOn && videosData.videos.Count > 0)
+        if (!loopToggle.isOn)
         {
-            videoPlaybackController.Play(videosData.videos[0].fileName);
+            WindowsMessageBox.Show("Loop is off in menu screen!", "Error!");
+            return;
         }
+
+        var videosData = VideoConfigManager.Load();
+        if (videosData.videos.Count == 0)
+        {
+            WindowsMessageBox.Show("No videos data available!", "Error!");
+            return;
+        }
+        
+        videoPlaybackController.Play(videosData.videos[0].fileName);
+    }
+
+    public void UpdateUI()
+    {
+        SetVideoButtons();
+        int totalVideos = VideoConfigManager.Load().videos.Count+2;
+        List<string> options = new List<string>();
+        for (int i = 1; i < totalVideos; i++)
+        {
+            options.Add(i.ToString());
+        }
+        totalVideoDropdown.AddOptions(options);
     }
 
     void SetVideoButtons()
@@ -211,5 +233,23 @@ public class MenuManager : MonoBehaviour
                 x.videoName == vi.GetVideoName()).videoTime = vi.GetVideoDuration();
             Debug.Log("Setting Video Duration : "+vi.GetVideoName());
         } 
+    }
+
+    public void ClearData()
+    {
+        foreach (var video in VideoConfigManager.Load().videos)
+        {
+            string path = Path.Combine(
+                Application.streamingAssetsPath,
+                "Videos",
+                video.fileName
+            );
+            File.Delete(path);
+        }
+        VideoConfigManager.ClearData();
+        videosData.ClearData();
+        
+        WindowsMessageBox.Show("All videos data Cleared!", "Message!");
+        SetVideoButtons();
     }
 }

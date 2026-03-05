@@ -20,4 +20,12 @@ public static class VideoConfigManager
         string json = JsonUtility.ToJson(config, true);
         File.WriteAllText(ConfigPath, json);
     }
+
+    public static void ClearData()
+    {
+        if (File.Exists(ConfigPath))
+        {
+            File.Delete(ConfigPath);
+        }
+    }
 }
