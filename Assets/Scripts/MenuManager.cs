@@ -143,7 +143,17 @@ public class MenuManager : MonoBehaviour
             var button = btn.GetComponent<Button>();
             var file = data.videosData[i].videoFilename;
             button.onClick.RemoveAllListeners();
-            button.onClick.AddListener(()=>videoPlaybackController.Play(file));
+            button.onClick.AddListener(()=>
+            {
+                if (loopToggle.isOn)
+                {
+                    WindowsMessageBox.Show("Can't play single video. Loop is enabled!", "Error!");
+                }
+                else
+                {
+                    videoPlaybackController.Play(file);
+                }
+            });
             button.interactable = i < totalVideos;
             
             var inp = Instantiate(videoInput, videoInputParent);
