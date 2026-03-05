@@ -114,6 +114,7 @@ public class MenuManager : MonoBehaviour
         {
             options.Add(i.ToString());
         }
+        totalVideoDropdown.ClearOptions();
         totalVideoDropdown.AddOptions(options);
     }
 

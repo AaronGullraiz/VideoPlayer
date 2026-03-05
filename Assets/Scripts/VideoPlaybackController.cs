@@ -80,6 +80,7 @@ public class VideoPlaybackController : MonoBehaviour
             video.fileName
         );
 
+        videoPlayer.isLooping = isLoop;
         videoPlayer.url = path;
         videoPlayer.Prepare();
         playingVideoTime = videosDataHandler.GetVideoTime(video.fileName);
