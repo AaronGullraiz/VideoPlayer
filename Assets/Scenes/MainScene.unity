@@ -1158,6 +1158,11 @@ MonoBehaviour:
   videoInputParent: {fileID: 648839092}
   videoInput: {fileID: 1306129054}
   videoSettingsData: {fileID: 1022064423}
+  menuRects:
+  - {fileID: 90039558}
+  - {fileID: 1832326018}
+  - {fileID: 831118433}
+  - {fileID: 2079288617}
 --- !u!114 &289570247
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5126,7 +5131,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 72
+  m_fontSize: 18
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1

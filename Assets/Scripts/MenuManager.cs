@@ -45,9 +45,11 @@ public class MenuManager : MonoBehaviour
     
     List<string> durations = new List<string>();
 
+    public List<RectTransform> menuRects;
+
     void Start()
     {
-        screensizeToggle.isOn = PlayerPrefs.GetInt(screenSize, 0) == 1;
+        screensizeToggle.isOn = PlayerPrefs.GetInt(screenSize, 0) == 0;
         fullscreenToggle.isOn = PlayerPrefs.GetInt(fullScreen, 0) == 1;
 
         SetVideoButtons();
@@ -64,6 +66,14 @@ public class MenuManager : MonoBehaviour
         totalVideoDropdown.AddOptions(options);
 
         for (int i = 1; i < 61; i++) durations.Add(i.ToString());
+
+        if ((Screen.width + 0.0f)/Screen.height < 2)
+        {
+            foreach (var rect in menuRects)
+            {
+                rect.offsetMin = new Vector2(0, rect.offsetMin.y);
+            }
+        }
     }
 
     public void SaveVideoNames()
