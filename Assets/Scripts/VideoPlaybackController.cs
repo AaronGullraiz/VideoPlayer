@@ -73,7 +73,7 @@ public class VideoPlaybackController : MonoBehaviour
         if (playingVideosData.Count == 0) return;
         
         var video = playingVideosData[playingVideoIndex];
-
+        
         string path = Path.Combine(
             Application.streamingAssetsPath,
             "Videos",

@@ -32,7 +32,7 @@ public class VideosDataHandler : MonoBehaviour
 
         for (int i = 0; i < data.videosData.Count; i++)
         {
-            if (data.videosData[i].videoFilename == string.Empty)
+            if (string.IsNullOrEmpty(data.videosData[i].videoFilename))
             {
                 data.videosData[i] = d;
                 break;
