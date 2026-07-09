@@ -34,9 +34,28 @@ public class MenuManager : MonoBehaviour
     [DllImport("user32.dll")]
     private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
 
+    [DllImport("user32.dll")]
+    private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
+
+    [DllImport("user32.dll")]
+    private static extern int GetSystemMetrics(int nIndex);
+
     private const int GWL_STYLE = -16;
     private const int WS_SIZEBOX = 0x00040000; // Resizable border
     private const int WS_MAXIMIZEBOX = 0x00010000; // Maximize button
+    private const int WS_CAPTION = 0x00C00000;    // Title bar
+    private const int WS_BORDER = 0x00800000;
+    private const int WS_DLGFRAME = 0x00400000;
+    private const int WS_POPUP = unchecked((int)0x80000000); // borderless window style
+
+    private const int SM_XVIRTUALSCREEN = 76;
+    private const int SM_YVIRTUALSCREEN = 77;
+    private const int SM_CXVIRTUALSCREEN = 78; // combined width of ALL monitors
+    private const int SM_CYVIRTUALSCREEN = 79; // combined height of ALL monitors
+
+    private const uint SWP_NOZORDER = 0x0004;
+    private const uint SWP_FRAMECHANGED = 0x0020;
+    private const uint SWP_SHOWWINDOW = 0x0040;
     
     const string screenSize = "Screen Size";
     const string fullScreen = "Full Screen";
@@ -179,10 +198,58 @@ public class MenuManager : MonoBehaviour
     {
         bool isFullScreen = fullscreenToggle.isOn;
 
-        Screen.fullScreen = isFullScreen;
         PlayerPrefs.SetInt(fullScreen, isFullScreen ? 1 : 0);
-
         PlayerPrefs.Save();
+
+        if (isFullScreen)
+        {
+            SpanAcrossAllMonitors();
+        }
+        else
+        {
+            // Drop back to a normal single-monitor windowed state.
+            Screen.fullScreen = false;
+            IntPtr hWnd = GetActiveWindow();
+            int style = GetWindowLong(hWnd, GWL_STYLE);
+            style |= WS_CAPTION | WS_BORDER | WS_DLGFRAME;
+            SetWindowLong(hWnd, GWL_STYLE, style);
+            SetWindowPos(hWnd, IntPtr.Zero, 0, 0, 0, 0,
+                SWP_NOZORDER | SWP_FRAMECHANGED | SWP_SHOWWINDOW | 0x0001 /*SWP_NOSIZE*/ | 0x0002 /*SWP_NOMOVE*/);
+        }
+    }
+
+    /// <summary>
+    /// Native Unity/OS fullscreen can only ever target a single monitor, so for a window
+    /// that needs to span two projector outputs (Windows "Extend" desktop) we instead
+    /// force a borderless windowed state and manually stretch that window to cover the
+    /// full virtual desktop (the bounding box of ALL connected displays).
+    /// </summary>
+    private void SpanAcrossAllMonitors()
+    {
+        // Make sure Unity itself isn't trying to claim OS-level exclusive/borderless
+        // fullscreen on whichever single display currently contains the window.
+        Screen.fullScreenMode = FullScreenMode.Windowed;
+        Screen.fullScreen = false;
+
+        IntPtr hWnd = GetActiveWindow();
+
+        // Strip the title bar / border so the window can sit seamlessly across the
+        // boundary between the two projector outputs.
+        int style = GetWindowLong(hWnd, GWL_STYLE);
+        style &= ~(WS_CAPTION | WS_BORDER | WS_DLGFRAME | WS_SIZEBOX | WS_MAXIMIZEBOX);
+        SetWindowLong(hWnd, GWL_STYLE, style);
+
+        // Bounding box of the full virtual desktop (both monitors combined).
+        int vx = GetSystemMetrics(SM_XVIRTUALSCREEN);
+        int vy = GetSystemMetrics(SM_YVIRTUALSCREEN);
+        int vw = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+        int vh = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+
+        SetWindowPos(hWnd, IntPtr.Zero, vx, vy, vw, vh,
+            SWP_NOZORDER | SWP_FRAMECHANGED | SWP_SHOWWINDOW);
+
+        // Let Unity know the render target size changed so the Canvas/UI scales correctly.
+        Screen.SetResolution(vw, vh, FullScreenMode.Windowed);
     }
 
     public void SetResizable(bool resizable)
